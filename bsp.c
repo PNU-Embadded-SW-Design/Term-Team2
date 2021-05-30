@@ -733,7 +733,7 @@ void BSP_Infrared_Init(void)
 
     RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
 
-    gpio_init.GPIO_Pin   = BSP_GPIOC_Infrared_PIN;
+    gpio_init.GPIO_Pin   = GPIO_Pin_0;
     gpio_init.GPIO_Speed = GPIO_Speed_50MHz;
     gpio_init.GPIO_Mode  = GPIO_Mode_AIN;
 
@@ -752,7 +752,7 @@ void BSP_Infrared_Init(void)
     adc_init.ADC_NbrOfChannel = 1;
     adc_init.ADC_ScanConvMode = ENABLE;
     
-    ADC_RegularChannelConfig(ADC1, ADC_Channel_1, 1, ADC_SampleTime_55Cycles5);
+    ADC_RegularChannelConfig(ADC1, ADC_Channel_10, 1, ADC_SampleTime_55Cycles5);
     ADC_Init(ADC1, &adc_init);
      
     ADC_Cmd(ADC1, ENABLE);
