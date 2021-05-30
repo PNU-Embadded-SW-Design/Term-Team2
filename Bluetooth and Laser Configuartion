@@ -1,0 +1,51 @@
+void Laser_Configuration() 
+{
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_13;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;  
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  GPIO_SetBits(GPIOC, BSP_GPIOC_PIN_13);
+}
+
+void Bluetooth_Configure(void)
+{
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+    RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+    RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	
+    GPIO_InitTypeDef GPIO_InitStructure_USARTTX;
+    GPIO_InitTypeDef GPIO_InitStructure_USARTRX;
+     
+    GPIO_InitStructure_USARTTX.GPIO_Pin = GPIO_Pin_2;
+    GPIO_InitStructure_USARTTX.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure_USARTTX.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure_USARTTX);
+    
+    GPIO_InitStructure_USARTRX.GPIO_Pin = GPIO_Pin_3;
+    GPIO_InitStructure_USARTRX.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure_USARTRX.GPIO_Mode = GPIO_Mode_IPD;
+    GPIO_Init(GPIOA, &GPIO_InitStructure_USARTRX);
+	
+    USART_InitTypeDef USART_InitStructure;
+    USART_Cmd(USART2, ENABLE);
+   
+    USART_InitStructure.USART_BaudRate = 9600;            
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;      
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;        
+    USART_InitStructure.USART_Parity = USART_Parity_No;             
+    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;                
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+    USART_Init(USART2, &USART_InitStructure);
+   
+    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+	
+}
+
+void USART2_IRQHandler() {
+    if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET){
+          BSP_LED_On(4);
+          USART_ClearITPendingBit(USART2,USART_IT_RXNE);
+    }
+}
