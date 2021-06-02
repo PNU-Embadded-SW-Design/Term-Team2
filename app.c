@@ -96,6 +96,13 @@ void GPIO_Configure();
 void LCD_Display();
 void two_dimensional_coord();
 
+void Servo_Configuration();
+void Laser_Configuration();
+void Bluetooth_Configure();
+void NVIC_Configure();
+void USART1_IRQHandler();
+void USART2_IRQHandler();
+
 /*
 *********************************************************************************************************
 *                                                main()
@@ -359,3 +366,154 @@ static void Rad_task(void* p_arg)
 }
 
 #endif
+
+
+
+void Servo_Configuration()
+{
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOB, ENABLE); 
+  RCC_APB1PeriphClockCmd(RCC_APB1Periph_TIM4, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStructure;
+
+  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_6;
+  GPIO_InitStructure.GPIO_Mode = GPIO_Mode_AF_PP;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+
+  GPIO_Init(GPIOB, &GPIO_InitStructure);
+  
+  TIM_TimeBaseInitTypeDef  TIM_TimeBaseStructure;
+  TIM_OCInitTypeDef  TIM_OCInitStructure;
+  
+  TIM_TimeBaseStructure.TIM_Period = 20000 -1;
+  TIM_TimeBaseStructure.TIM_Prescaler = 47;
+  TIM_TimeBaseStructure.TIM_ClockDivision = 0;
+  TIM_TimeBaseStructure.TIM_CounterMode = TIM_CounterMode_Down;
+
+  TIM_TimeBaseInit(TIM4, &TIM_TimeBaseStructure);
+
+  TIM_OCInitStructure.TIM_OCMode = TIM_OCMode_PWM1;
+  TIM_OCInitStructure.TIM_OutputState = TIM_OutputState_Enable;
+  
+  TIM_OCInitStructure.TIM_Pulse = 800;
+  TIM_OCInitStructure.TIM_OCPolarity = TIM_OCPolarity_High;   
+  TIM_OC1Init(TIM4, &TIM_OCInitStructure);
+  TIM_OC1PreloadConfig(TIM4, TIM_OCPreload_Enable);
+
+  TIM_ARRPreloadConfig(TIM4, ENABLE);
+
+  TIM_Cmd(TIM4, ENABLE);
+}
+
+void Laser_Configuration() 
+{
+  RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOC, ENABLE);
+  GPIO_InitTypeDef GPIO_InitStructure;
+  GPIO_InitStructure.GPIO_Pin =  GPIO_Pin_13;
+  GPIO_InitStructure.GPIO_Speed = GPIO_Speed_50MHz;
+  GPIO_InitStructure.GPIO_Mode  = GPIO_Mode_Out_PP;  
+  GPIO_Init(GPIOC, &GPIO_InitStructure);
+  GPIO_SetBits(GPIOC, BSP_GPIOC_PIN_13);
+}
+
+void Bluetooth_Configure()
+{
+    /* UART TX/RX port clock enable */
+   RCC_APB2PeriphClockCmd(RCC_APB2Periph_GPIOA, ENABLE);
+   /* USART1 clock enable */
+   RCC_APB2PeriphClockCmd(RCC_APB2Periph_USART1, ENABLE);
+   /* USART2 clock enable */
+   RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
+   /* Alternate Function IO clock enable */
+   RCC_APB2PeriphClockCmd(RCC_APB2Periph_AFIO, ENABLE);
+	
+	GPIO_InitTypeDef GPIO_InitStructure_USARTTX;
+    GPIO_InitTypeDef GPIO_InitStructure_USARTRX;
+   
+    /* UART1 pin setting */
+    //TX
+    GPIO_InitStructure_USARTTX.GPIO_Pin = GPIO_Pin_9;
+    GPIO_InitStructure_USARTTX.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure_USARTTX.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure_USARTTX); 
+     //RX
+     GPIO_InitStructure_USARTRX.GPIO_Pin = GPIO_Pin_10;
+     GPIO_InitStructure_USARTRX.GPIO_Speed = GPIO_Speed_50MHz;
+     GPIO_InitStructure_USARTRX.GPIO_Mode = GPIO_Mode_IPD;
+     GPIO_Init(GPIOA, &GPIO_InitStructure_USARTRX);
+     
+     /* UART2 pin setting */
+    //TX
+    GPIO_InitStructure_USARTTX.GPIO_Pin = GPIO_Pin_2;
+    GPIO_InitStructure_USARTTX.GPIO_Speed = GPIO_Speed_50MHz;
+    GPIO_InitStructure_USARTTX.GPIO_Mode = GPIO_Mode_AF_PP;
+    GPIO_Init(GPIOA, &GPIO_InitStructure_USARTTX);
+    
+     //RX
+     GPIO_InitStructure_USARTRX.GPIO_Pin = GPIO_Pin_3;
+     GPIO_InitStructure_USARTRX.GPIO_Speed = GPIO_Speed_50MHz;
+     GPIO_InitStructure_USARTRX.GPIO_Mode = GPIO_Mode_IPD;
+     GPIO_Init(GPIOA, &GPIO_InitStructure_USARTRX);
+	
+	USART_InitTypeDef USART_InitStructure;
+
+      // Enable the USART1 peripheral
+    USART_Cmd(USART1, ENABLE);
+    USART_Cmd(USART2, ENABLE);
+   
+      // TODO: Initialize the USART using the structure 'USART_InitTypeDef' and the function 'USART_Init'
+    USART_InitStructure.USART_BaudRate = 9600;            
+    USART_InitStructure.USART_WordLength = USART_WordLength_8b;      
+    USART_InitStructure.USART_StopBits = USART_StopBits_1;        
+    USART_InitStructure.USART_Parity = USART_Parity_No;             
+    USART_InitStructure.USART_Mode = USART_Mode_Tx | USART_Mode_Rx;                
+    USART_InitStructure.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+      
+    USART_Init(USART1, &USART_InitStructure);
+    USART_Init(USART2, &USART_InitStructure);
+   
+      // TODO: Enable the USART1 RX interrupts using the function 'USART_ITConfig' and the argument value 'Receive Data register not empty interrupt'
+    USART_ITConfig(USART1, USART_IT_RXNE, ENABLE);
+    USART_ITConfig(USART2, USART_IT_RXNE, ENABLE);
+}
+void NVIC_Configure() {
+    NVIC_InitTypeDef NVIC_InitStructure_UART;
+
+    NVIC_PriorityGroupConfig(NVIC_PriorityGroup_2);
+
+    // UART1
+    //NVIC_EnableIRQ(USART1_IRQChannel);
+    NVIC_InitStructure_UART.NVIC_IRQChannel = USART1_IRQChannel;
+    NVIC_InitStructure_UART.NVIC_IRQChannelPreemptionPriority = 0x3; // TODO
+    NVIC_InitStructure_UART.NVIC_IRQChannelSubPriority = 0x0; // TODO
+    NVIC_InitStructure_UART.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure_UART);
+    
+    
+    // UART2
+    //NVIC_EnableIRQ(USART2_IRQChannel);
+    NVIC_InitStructure_UART.NVIC_IRQChannel = USART2_IRQChannel;
+    NVIC_InitStructure_UART.NVIC_IRQChannelPreemptionPriority = 0x4; // TODO
+    NVIC_InitStructure_UART.NVIC_IRQChannelSubPriority = 0x0; // TODO
+    NVIC_InitStructure_UART.NVIC_IRQChannelCmd = ENABLE;
+    NVIC_Init(&NVIC_InitStructure_UART);
+}
+
+void USART1_IRQHandler() {
+    if(USART_GetITStatus(USART1,USART_IT_RXNE)!=RESET){
+          // the most recent received data by the USART1 peripheral
+       char data = USART_ReceiveData(USART1);
+      USART_SendData(USART2, data);
+        // clear 'Read data register not empty' flag
+       USART_ClearITPendingBit(USART1,USART_IT_RXNE);
+    }
+}
+
+void USART2_IRQHandler() {
+    if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET){
+          // the most recent received data by the USART2 peripheral
+        char data = USART_ReceiveData(USART2);
+      USART_SendData(USART1, data);
+        // clear 'Read data register not empty' flag
+          USART_ClearITPendingBit(USART2,USART_IT_RXNE);
+    }
+}
