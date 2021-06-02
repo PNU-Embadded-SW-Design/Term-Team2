@@ -72,10 +72,12 @@ static  CPU_STK  ADCTaskStartStk[APP_TASK_START_STK_SIZE];
 uint32_t ADC_value = 0;
 
 #ifdef DEV_COORDINATE
+
+#define PI 3.14159265 
 static  OS_TCB   RadTaskTCB; 
 static  CPU_STK  RadTaskStartStk[APP_TASK_START_STK_SIZE];
-
-static void Rad_Task(void* p_arg);
+static uint32_t degree;
+static void Rad_task(void* p_arg);
 #endif
 
 /*
@@ -201,7 +203,7 @@ static  void  AppTaskStart (void *p_arg)
         
         OSTaskCreate((OS_TCB     *)&RadTaskTCB,                /* Create the start task                                */
                  (CPU_CHAR   *)"Rad Task",
-                 (OS_TASK_PTR )Rad_Task, 
+                 (OS_TASK_PTR )Rad_task, 
                  (void       *)0,
                  (OS_PRIO     )1,
                  (CPU_STK    *)&RadTaskStartStk[0],
@@ -287,6 +289,16 @@ void two_dimensional_coord()
     LCD_DrawLine(X0 ,Y_START, X0, Y_END); // y
 }
 
+
+
+#ifdef DEV_COORDINATE
+
+typedef struct {
+    double x;
+    double y;
+} Coordinate;
+
+/*
 static void Draw_Task(void* p_arg)
 {
     OS_ERR err;
@@ -300,30 +312,46 @@ static void Draw_Task(void* p_arg)
     }
     
 }
-
-#ifdef DEV_COORDINATE
-
-typedef struct {
-    int x;
-    int y;
-} Coordinate;
-
-Coordinate Calc_Coordiate(uint32_t rad, uint32_t adc)
+*/
+void Calc_Coordinate(uint32_t degree, uint32_t adc, Coordinate* coordinate)
 {
+    double rad = degree * PI / 180.0;
+    int r = (1750 - adc/2) / 10;
+    coordinate->x = r * cos(rad);
+    coordinate->y = r * sin(rad);
     
-    
+    LCD_ShowNum(15, 100, r, 4, BLUE, WHITE);
+    LCD_ShowNum(15, 120, (int)coordinate->x, 5, BLUE, WHITE);
+    LCD_ShowNum(15, 140, (int)coordinate->y, 5, BLUE, WHITE);
+   
 }
 
 static void Rad_task(void* p_arg)
 {
     OS_ERR err;
     Coordinate coordinate;
-    
+    degree = 0;
+    int cnt=0;
     while (DEF_TRUE) {
         
-        
-        coordinate = Calc_Coordinate(rad, ADC_value);
-        OSTimeDlyHMSM(0, 0, 0, 100, 
+        degree++;
+        if(degree>=360) {
+            degree = 0;
+            cnt++;
+        }
+        if (cnt > 10) {
+            LCD_Clear(WHITE);
+            two_dimensional_coord();
+            cnt=0;
+        }
+        if(ADC_value > 1500) {
+            int x = X0 + (int)coordinate.x;
+            int y = Y0 + (int)coordinate.y;
+            Calc_Coordinate(degree, ADC_value, &coordinate);
+            if ( x >= X_START && x <= X_END && y >= Y_START && y < Y_END) 
+                LCD_DrawCircle(x, y, 1);
+        }
+        OSTimeDlyHMSM(0, 0, 0, 1, 
                       OS_OPT_TIME_HMSM_STRICT, 
                       &err);        
     }
